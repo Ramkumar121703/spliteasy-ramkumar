@@ -63,6 +63,27 @@ app.delete('/api/expenses/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+
+
+// BALANCES - Hisab
+app.get('/api/balances', async (req, res) => {
+  const people = await Person.find();
+  const expenses = await Expense.find();
+  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const share = people.length ? total / people.length : 0;
+
+  const result = people.map(p => {
+    const paid = expenses.filter(e => e.paidBy === p.name).reduce((sum, e) => sum + e.amount, 0);
+    return {
+      name: p.name,
+      paid: paid,
+      share: share,
+      balance: paid - share // + matlab lena hai, - matlab dena hai
+    };
+  });
+  res.json({ total, share, balances: result });
+});
+
 app.listen(process.env.PORT || 5000, () => console.log('Server running on ' + (process.env.PORT || 5000)));
 
 app.put('/api/people/:id', async (req, res) => {

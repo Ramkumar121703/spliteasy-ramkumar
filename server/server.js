@@ -28,4 +28,4 @@ app.post('/api/expenses', async (req, res) => res.json(await new Expense(req.bod
 app.put('/api/expenses/:id', async (req, res) => res.json(await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/expenses/:id', async (req, res) => { await Expense.findByIdAndDelete(req.params.id); res.json({ ok: true }); });
 
-app.listen(5000, () => console.log('Server running on 5000'));
+app.listen(process.env.PORT || 5000, () => console.log('Server running on ' + (process.env.PORT || 5000)));

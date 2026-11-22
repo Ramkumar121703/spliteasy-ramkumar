@@ -13,22 +13,54 @@ mongoose.connect(process.env.MONGO_URI)
 
 const Person = mongoose.model('Person', new mongoose.Schema({ name: String }));
 const Expense = mongoose.model('Expense', new mongoose.Schema({
-  title: String,
+  description: String,
   amount: Number,
   paidBy: String,
   date: { type: Date, default: Date.now }
 }));
 
-app.get('/', (req, res) => res.send('SplitEasy Backend Running'));
-
+// PEOPLE
 app.get('/api/people', async (req, res) => res.json(await Person.find()));
-app.post('/api/people', async (req, res) => res.json(await new Person(req.body).save()));
-app.delete('/api/people/:id', async (req, res) => { await Person.findByIdAndDelete(req.params.id); res.json({ ok: true }); });
 
+app.post('/api/people', async (req, res) => {
+  if (!req.body.name || !req.body.name.trim()) return res.status(400).json({ message: 'Name chahiye' });
+  const exists = await Person.findOne({ name: req.body.name.trim() });
+  if (exists) return res.status(400).json({ message: 'Ye person pehle se hai' });
+  const p = await new Person({ name: req.body.name.trim() }).save();
+  res.status(201).json(p);
+});
+
+app.delete('/api/people/:id', async (req, res) => {
+  const person = await Person.findById(req.params.id);
+  if (!person) return res.status(404).json({ message: 'Person nahi mila' });
+  await Expense.deleteMany({ paidBy: person.name });
+  await Person.findByIdAndDelete(req.params.id);
+  res.json({ ok: true });
+});
+
+// EXPENSES
 app.get('/api/expenses', async (req, res) => res.json(await Expense.find().sort({ date: -1 })));
-app.post('/api/expenses', async (req, res) => res.json(await new Expense(req.body).save()));
-app.put('/api/expenses/:id', async (req, res) => res.json(await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-app.delete('/api/expenses/:id', async (req, res) => { await Expense.findByIdAndDelete(req.params.id); res.json({ ok: true }); });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log('Server running on ' + PORT));
+app.post('/api/expenses', async (req, res) => {
+  const { description, amount, paidBy } = req.body;
+  if (!description || !description.trim()) return res.status(400).json({ message: 'Description chahiye' });
+  if (!amount || amount <= 0) return res.status(400).json({ message: 'Amount 0 se bada hona chahiye' });
+  const person = await Person.findOne({ name: paidBy });
+  if (!person) return res.status(400).json({ message: 'Aisa person nahi hai' });
+  const e = await new Expense({ description: description.trim(), amount, paidBy }).save();
+  res.status(201).json(e);
+});
+
+app.put('/api/expenses/:id', async (req, res) => {
+  const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!updated) return res.status(404).json({ message: 'Expense nahi mila' });
+  res.json(updated);
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+  const deleted = await Expense.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ message: 'Expense nahi mila' });
+  res.json({ ok: true });
+});
+
+app.listen(process.env.PORT || 5000, () => console.log('Server running on ' + (process.env.PORT || 5000)));

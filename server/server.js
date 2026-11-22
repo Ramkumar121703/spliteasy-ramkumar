@@ -46,19 +46,22 @@ app.post('/api/expenses', async (req, res) => {
   if (!description || !description.trim()) return res.status(400).json({ message: 'Description chahiye' });
   if (!amount || amount <= 0) return res.status(400).json({ message: 'Amount 0 se bada hona chahiye' });
   if (!paidBy) return res.status(400).json({ message: 'Aisa person nahi hai' });
-
-  // FIX: Naam me capital-small aur space ka fark ignore karo
   const person = await Person.findOne({ name: { $regex: new RegExp(`^${paidBy.trim()}$`, "i") } });
   if (!person) return res.status(400).json({ message: 'Aisa person nahi hai' });
-
-  // DB wala sahi naam hi save karo
   paidBy = person.name;
-
   const e = await new Expense({ description: description.trim(), amount, paidBy }).save();
   res.status(201).json(e);
 });
 
 app.put('/api/expenses/:id', async (req, res) => {
+  let { description, amount, paidBy } = req.body;
+  if (description !== undefined && !description.trim()) return res.status(400).json({ message: 'Description chahiye' });
+  if (amount !== undefined && amount <= 0) return res.status(400).json({ message: 'Amount 0 se bada hona chahiye' });
+  if (paidBy) {
+    const person = await Person.findOne({ name: { $regex: new RegExp(`^${paidBy.trim()}$`, "i") } });
+    if (!person) return res.status(400).json({ message: 'Aisa person nahi hai' });
+    req.body.paidBy = person.name;
+  }
   const updated = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!updated) return res.status(404).json({ message: 'Expense nahi mila' });
   res.json(updated);
@@ -70,35 +73,18 @@ app.delete('/api/expenses/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
-
-
 // BALANCES - Hisab
 app.get('/api/balances', async (req, res) => {
   const people = await Person.find();
   const expenses = await Expense.find();
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const share = people.length ? total / people.length : 0;
-
   const result = people.map(p => {
     const paid = expenses.filter(e => e.paidBy === p.name).reduce((sum, e) => sum + e.amount, 0);
-    return {
-      name: p.name,
-      paid: paid,
-      share: share,
-      balance: paid - share // + matlab lena hai, - matlab dena hai
-    };
+    return { name: p.name, paid: paid, share: share, balance: paid - share };
   });
   res.json({ total, share, balances: result });
 });
 
 app.listen(process.env.PORT || 5000, () => console.log('Server running on ' + (process.env.PORT || 5000)));
 
-app.put('/api/people/:id', async (req, res) => {
-  try {
-    const updated = await Person.findByIdAndUpdate(req.params.id, { name: req.body.name.trim() }, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Person nahi mila' });
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});

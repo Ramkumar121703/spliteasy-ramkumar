@@ -1,4 +1,4 @@
- import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const API = "https://spliteasy-ramkumar.onrender.com/api";
 
@@ -74,18 +74,6 @@ function App() {
     loadData();
   };
 
-  // FIX: Purana kharcha jiska banda ab member nahi hai, usko saaf karo
-  const cleanOldData = async () => {
-    const badExpenses = expenses.filter(e => !members.find(m => m.name === e.paidBy));
-    for (let e of badExpenses) {
-      await fetch(`${API}/expenses/${e._id}`, { method: "DELETE" });
-    }
-    alert("Purana gadbad kharcha saaf ho gaya!");
-    loadData();
-  };
-
-  const badCount = expenses.filter(e => !members.find(m => m.name === e.paidBy)).length;
-
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const perPerson = members.length > 0 ? total / members.length : 0;
   const balances = members.map((m) => {
@@ -140,11 +128,6 @@ function App() {
 
         <div style={{ background: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", marginBottom: "20px" }}>
           <h3 style={{ margin: "0 0 15px" }}>📋 Saare Kharcha ({expenses.length})</h3>
-          {badCount > 0 && (
-            <button onClick={cleanOldData} style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#ef4444", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "700" }}>
-              ⚠️ Purana Gadbad Kharcha Saaf Karo ({badCount})
-            </button>
-          )}
           {expenses.length === 0 && <p style={{ color: "#999", margin: 0 }}>Abhi koi kharcha nahi hai.</p>}
           {expenses.map((e) => (
             <div key={e._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: "#f9fafb", borderRadius: "12px", marginBottom: "8px" }}>

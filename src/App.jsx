@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+ import { useState, useEffect } from "react";
 
 const API = "https://spliteasy-ramkumar.onrender.com/api";
 
@@ -74,6 +74,18 @@ function App() {
     loadData();
   };
 
+  // FIX: Purana kharcha jiska banda ab member nahi hai, usko saaf karo
+  const cleanOldData = async () => {
+    const badExpenses = expenses.filter(e => !members.find(m => m.name === e.paidBy));
+    for (let e of badExpenses) {
+      await fetch(`${API}/expenses/${e._id}`, { method: "DELETE" });
+    }
+    alert("Purana gadbad kharcha saaf ho gaya!");
+    loadData();
+  };
+
+  const badCount = expenses.filter(e => !members.find(m => m.name === e.paidBy)).length;
+
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const perPerson = members.length > 0 ? total / members.length : 0;
   const balances = members.map((m) => {
@@ -128,10 +140,15 @@ function App() {
 
         <div style={{ background: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", marginBottom: "20px" }}>
           <h3 style={{ margin: "0 0 15px" }}>📋 Saare Kharcha ({expenses.length})</h3>
+          {badCount > 0 && (
+            <button onClick={cleanOldData} style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#ef4444", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "700" }}>
+              ⚠️ Purana Gadbad Kharcha Saaf Karo ({badCount})
+            </button>
+          )}
           {expenses.length === 0 && <p style={{ color: "#999", margin: 0 }}>Abhi koi kharcha nahi hai.</p>}
           {expenses.map((e) => (
             <div key={e._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: "#f9fafb", borderRadius: "12px", marginBottom: "8px" }}>
-              <div><b style={{ fontSize: "15px" }}>{e.description || e.title}</b><div style={{ fontSize: "13px", color: "#888" }}>{e.paidBy} ne diya • {new Date(e.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
+              <div><b style={{ fontSize: "15px" }}>{e.description || e.title}</b><div style={{ fontSize: "13px", color: "#888" }}>{e.paidBy} ne diya • {e.date ? new Date(e.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Aaj'}</div></div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><b>₹{e.amount}</b>
                 <button onClick={() => startEdit(e)} style={{ border: "none", background: "#dbeafe", color: "#2563eb", padding: "6px 10px", borderRadius: "8px", cursor: "pointer" }}>✏️</button>
                 <button onClick={() => deleteExpense(e._id)} style={{ border: "none", background: "#fee2e2", color: "#ef4444", padding: "6px 10px", borderRadius: "8px", cursor: "pointer" }}>🗑️</button>
@@ -146,7 +163,7 @@ function App() {
             <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px", borderRadius: "12px", marginBottom: "8px", background: b.balance >= 0 ? "#f0fdf4" : "#fef2f2", border: `1px solid ${b.balance >= 0 ? "#bbf7d0" : "#fecaca"}` }}>
               <div><b>{b.name}</b><div style={{ fontSize: "13px", color: "#666" }}>Diya: ₹{b.paid}</div></div>
               <span style={{ color: b.balance >= 0 ? "#16a34a" : "#dc2626", fontWeight: "800", fontSize: "14px" }}>
-                {b.balance >= 0 ? `+ ₹${b.balance.toFixed(0)} Milega 🤑` : `- ₹${Math.abs(b.balance).toFixed(0)} Dena hai 😅`}
+                {b.balance === 0 ? `Barabar Hai ✅` : b.balance > 0 ? `+ ₹${b.balance.toFixed(0)} Milega 🤑` : `- ₹${Math.abs(b.balance).toFixed(0)} Dena hai 😅`}
               </span>
             </div>
           ))}

@@ -42,11 +42,18 @@ app.delete('/api/people/:id', async (req, res) => {
 app.get('/api/expenses', async (req, res) => res.json(await Expense.find().sort({ date: -1 })));
 
 app.post('/api/expenses', async (req, res) => {
-  const { description, amount, paidBy } = req.body;
+  let { description, amount, paidBy } = req.body;
   if (!description || !description.trim()) return res.status(400).json({ message: 'Description chahiye' });
   if (!amount || amount <= 0) return res.status(400).json({ message: 'Amount 0 se bada hona chahiye' });
-  const person = await Person.findOne({ name: paidBy });
+  if (!paidBy) return res.status(400).json({ message: 'Aisa person nahi hai' });
+
+  // FIX: Naam me capital-small aur space ka fark ignore karo
+  const person = await Person.findOne({ name: { $regex: new RegExp(`^${paidBy.trim()}$`, "i") } });
   if (!person) return res.status(400).json({ message: 'Aisa person nahi hai' });
+
+  // DB wala sahi naam hi save karo
+  paidBy = person.name;
+
   const e = await new Expense({ description: description.trim(), amount, paidBy }).save();
   res.status(201).json(e);
 });

@@ -66,10 +66,11 @@ app.delete('/api/expenses/:id', async (req, res) => {
 app.listen(process.env.PORT || 5000, () => console.log('Server running on ' + (process.env.PORT || 5000)));
 
 app.put('/api/people/:id', async (req, res) => {
-  if (!req.body.name || !req.body.name.trim()) return res.status(400).json({ message: 'Name chahiye' });
-  const exists = await Person.findOne({ name: req.body.name.trim(), _id: { $ne: req.params.id } });
-  if (exists) return res.status(400).json({ message: 'Ye person pehle se hai' });
-  const updated = await Person.findByIdAndUpdate(req.params.id, { name: req.body.name.trim() }, { new: true });
-  if (!updated) return res.status(404).json({ message: 'Person nahi mila' });
-  res.json(updated);
+  try {
+    const updated = await Person.findByIdAndUpdate(req.params.id, { name: req.body.name.trim() }, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Person nahi mila' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });

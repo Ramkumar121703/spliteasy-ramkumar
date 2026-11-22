@@ -30,6 +30,31 @@ app.post('/api/people', async (req, res) => {
   res.status(201).json(p);
 });
 
+// YE WALA MISSING THA - AB ADD KAR DIYA
+app.put('/api/people/:id', async (req, res) => {
+  if (!req.body.name || !req.body.name.trim()) return res.status(400).json({ message: 'Name chahiye' });
+  const newName = req.body.name.trim();
+
+  const person = await Person.findById(req.params.id);
+  if (!person) return res.status(404).json({ message: 'Person nahi mila' });
+
+  const exists = await Person.findOne({ name: newName });
+  if (exists && exists._id.toString() !== req.params.id) {
+    return res.status(400).json({ message: 'Ye person pehle se hai' });
+  }
+
+  const oldName = person.name;
+  person.name = newName;
+  await person.save();
+
+  // Naam badla to uske expenses me bhi naam badal do, warna hisab bigad jayega
+  if (oldName !== newName) {
+    await Expense.updateMany({ paidBy: oldName }, { paidBy: newName });
+  }
+
+  res.json(person);
+});
+
 app.delete('/api/people/:id', async (req, res) => {
   const person = await Person.findById(req.params.id);
   if (!person) return res.status(404).json({ message: 'Person nahi mila' });
@@ -87,4 +112,3 @@ app.get('/api/balances', async (req, res) => {
 });
 
 app.listen(process.env.PORT || 5000, () => console.log('Server running on ' + (process.env.PORT || 5000)));
-

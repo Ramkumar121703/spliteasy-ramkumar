@@ -1,32 +1,24 @@
 # SplitEasy - Week 2
 
-Dosto ke saath kharcha baantne wali app. Data MongoDB me save hota hai, refresh ke baad bhi rehta hai.
+Dosto ke saath kharcha baantne wali app. React + Express + MongoDB Atlas.
 
-## Tech
-React, Node.js, Express, MongoDB Atlas, Mongoose
+## Features
+- Person add / delete (delete pe uske expenses bhi delete)
+- Expense add / edit / delete
+- Total, Per Person aur Balance ka hisab
+- Data refresh ke baad bhi rehta hai (MongoDB me save hota hai)
+- Validation: khali description, amount 0 ya kam, unknown person pe 400 error
+
+## API Routes
+- GET /api/people
+- POST /api/people
+- DELETE /api/people/:id
+- GET /api/expenses
+- POST /api/expenses
+- PUT /api/expenses/:id
+- DELETE /api/expenses/:id
+- GET /api/balances
 
 ## Kaise Chalaye
 
 ### Server
-cd server
-npm install
-# .env file banao aur usme apna MONGO_URI daalo
-npm start
-
-### Client
-cd client
-npm install
-npm run dev
-
-## API Routes
-- GET /api/people - Saare members
-- POST /api/people - Naya member { name }
-- DELETE /api/people/:id - Member + uske kharche delete
-- GET /api/expenses - Saare kharche, naya pehle
-- POST /api/expenses - Naya kharcha { description, amount, paidBy }
-- PUT /api/expenses/:id - Kharcha edit
-- DELETE /api/expenses/:id - Kharcha delete
-
-## Live Links
-- Frontend: https://spliteasy-ramkumar.vercel.app
-- Backend: https://spliteasy-ramkumar.onrender.com/api
